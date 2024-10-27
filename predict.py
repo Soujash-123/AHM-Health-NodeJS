@@ -3,6 +3,7 @@ import joblib
 import json
 import numpy as np
 from collections import Counter
+from datetime import datetime
 
 # Load the models
 model_names = [
@@ -58,10 +59,19 @@ def analyze_health(input_data):
     avg_temp = (float(input_data['temperature_one']) + float(input_data['temperature_two'])) / 2
     avg_vibration = (float(input_data['vibration_x']) + float(input_data['vibration_y']) + float(input_data['vibration_z'])) / 3
     
+    condition = evaluate_machine_condition(avg_temp, avg_vibration)
+    
+    # Determine overall health status
+    overall_health = "Healthy" if condition == "Safe Condition" else "Unhealthy"
+    
     return {
-        "machine_condition": evaluate_machine_condition(avg_temp, avg_vibration),
-        "temperature_analysis": detect_temperature_anomaly(avg_temp),
-        "vibration_analysis": detect_vibration_anomaly(avg_vibration)
+        "complete_analysis": {
+            "machine_condition": condition,
+            "temperature_analysis": detect_temperature_anomaly(avg_temp),
+            "vibration_analysis": detect_vibration_anomaly(avg_vibration),
+            "timestamp": datetime.now().isoformat()
+        },
+        "overall_health": overall_health
     }
 
 def aggregate_predictions(predictions_list):
@@ -115,17 +125,20 @@ def predict_from_models(input_data_array):
             except (ValueError, TypeError) as e:
                 raise ValueError(f"Invalid input for {model_name}: {str(e)}")
         
+        health_info = analyze_health(input_data)
         all_predictions.append(predictions)
-        health_analysis.append(analyze_health(input_data))
+        health_analysis.append(health_info['complete_analysis'])
     
-    # Aggregate predictions and health analysis
+    # Aggregate predictions
     aggregated_predictions = aggregate_predictions(all_predictions)
-    aggregated_health = health_analysis[0] if len(health_analysis) == 1 else health_analysis
     
-    # Combine predictions with health analysis
+    # Add overall health to aggregated predictions
+    health_status = health_analysis[0]['machine_condition']
+    aggregated_predictions['overall_health'] = "Healthy" if health_status == "Safe Condition" else "Unhealthy"
+    
     result = {
         "predictions": aggregated_predictions,
-        "overall_health": aggregated_health
+        "complete_health_analysis": health_analysis[0] if len(health_analysis) == 1 else health_analysis
     }
     
     return result
