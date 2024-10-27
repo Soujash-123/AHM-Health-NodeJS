@@ -23,6 +23,47 @@ feature_sets = {
     'ultra_sound_model': ['vibration_x', 'vibration_y', 'vibration_z', 'ultra_sound']
 }
 
+def evaluate_machine_condition(temperature, vibration):
+    if temperature < 80 and vibration < 1.8:
+        return "Safe Condition"
+    elif temperature < 100 and vibration < 2.8:
+        return "Maintain Condition"
+    else:
+        return "Repair Condition"
+
+def detect_temperature_anomaly(temperature):
+    if temperature < 80:
+        return "No significant temperature anomaly detected"
+    elif 80 <= temperature < 100:
+        return "Moderate Overheating - Check Lubrication"
+    elif 100 <= temperature < 120:
+        return "Significant Overheating - Possible Misalignment or Bearing Wear"
+    else:
+        return "Critical Overheating - Immediate Repair Needed"
+
+def detect_vibration_anomaly(vibration):
+    if vibration < 1.8:
+        return "No significant vibration anomaly detected"
+    elif 1.8 <= vibration < 2.8:
+        return "Unbalance Fault"
+    elif 2.8 <= vibration < 4.5:
+        return "Misalignment Fault"
+    elif 4.5 <= vibration < 7.1:
+        return "Looseness Fault"
+    else:
+        return "Bearing Fault or Gear Mesh Fault"
+
+def analyze_health(input_data):
+    # Calculate average temperature and vibration
+    avg_temp = (float(input_data['temperature_one']) + float(input_data['temperature_two'])) / 2
+    avg_vibration = (float(input_data['vibration_x']) + float(input_data['vibration_y']) + float(input_data['vibration_z'])) / 3
+    
+    return {
+        "machine_condition": evaluate_machine_condition(avg_temp, avg_vibration),
+        "temperature_analysis": detect_temperature_anomaly(avg_temp),
+        "vibration_analysis": detect_vibration_anomaly(avg_vibration)
+    }
+
 def aggregate_predictions(predictions_list):
     """
     Aggregate multiple predictions into a single result using majority voting for
@@ -49,6 +90,7 @@ def aggregate_predictions(predictions_list):
 def predict_from_models(input_data_array):
     # Get individual predictions for each input
     all_predictions = []
+    health_analysis = []
     
     for input_data in input_data_array:
         predictions = {}
@@ -72,11 +114,21 @@ def predict_from_models(input_data_array):
                 
             except (ValueError, TypeError) as e:
                 raise ValueError(f"Invalid input for {model_name}: {str(e)}")
-            
+        
         all_predictions.append(predictions)
+        health_analysis.append(analyze_health(input_data))
     
-    # Aggregate all predictions into a single result
-    return aggregate_predictions(all_predictions)
+    # Aggregate predictions and health analysis
+    aggregated_predictions = aggregate_predictions(all_predictions)
+    aggregated_health = health_analysis[0] if len(health_analysis) == 1 else health_analysis
+    
+    # Combine predictions with health analysis
+    result = {
+        "predictions": aggregated_predictions,
+        "overall_health": aggregated_health
+    }
+    
+    return result
 
 # Receive JSON input
 input_json = sys.stdin.read()
@@ -86,21 +138,19 @@ input_data_array = json.loads(input_json)
 if not isinstance(input_data_array, list):
     print(json.dumps({"error": "Input must be an array"}))
     sys.exit(1)
-
 if len(input_data_array) > 1800:
     print(json.dumps({"error": "Input array exceeds maximum length of 1800"}))
     sys.exit(1)
-
 if len(input_data_array) == 0:
     print(json.dumps({"error": "Input array cannot be empty"}))
     sys.exit(1)
 
 try:
-    # Generate aggregated prediction
-    prediction = predict_from_models(input_data_array)
+    # Generate prediction and health analysis
+    result = predict_from_models(input_data_array)
     
-    # Output the single prediction result as JSON
-    print(json.dumps(prediction))
+    # Output the result as JSON
+    print(json.dumps(result))
 except Exception as e:
     print(json.dumps({"error": str(e)}))
     sys.exit(1)
