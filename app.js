@@ -14,7 +14,6 @@ function predictFromModels(inputDataArray) {
             reject(new Error('Input array exceeds maximum length of 1800'));
             return;
         }
-
         if (inputDataArray.length === 0) {
             reject(new Error('Input array cannot be empty'));
             return;
@@ -30,14 +29,13 @@ function predictFromModels(inputDataArray) {
         
         // Run Python script and pass the inputData as JSON string
         let pyShell = new PythonShell('predict.py', options);
-
         pyShell.send(JSON.stringify(inputDataArray));
-
+        
         pyShell.on('message', (message) => {
             try {
                 // Parse the returned JSON message
-                let predictions = JSON.parse(message);
-                resolve(predictions);
+                let result = JSON.parse(message);
+                resolve(result);
             } catch (error) {
                 reject(`Error parsing prediction result: ${error}`);
             }
@@ -75,8 +73,9 @@ const inputDataArray = [
 
 // Call the prediction function and print the result
 predictFromModels(inputDataArray)
-    .then(predictions => {
-        console.log("Predictions:", predictions);
+    .then(result => {
+        console.log("Model Predictions:", result.predictions);
+        console.log("Overall Health Analysis:", result.overall_health);
     })
     .catch(error => {
         console.error("Error:", error);
