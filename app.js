@@ -74,8 +74,8 @@ const inputDataArray = [
 // Call the prediction function and print the result
 predictFromModels(inputDataArray)
     .then(result => {
-        console.log("Model Predictions:", result.predictions);
-        console.log("Overall Health Analysis:", result.overall_health);
+        console.log("Predictions (including overall health):", result.predictions);
+        console.log("Complete Health Analysis:", result.complete_health_analysis);
     })
     .catch(error => {
         console.error("Error:", error);
