@@ -134,7 +134,7 @@ def predict_from_models(input_data_array):
     
     # Add overall health to aggregated predictions
     health_status = health_analysis[0]['machine_condition']
-    aggregated_predictions['overall_health'] = "Healthy" if health_status == "Safe Condition" else "Unhealthy"
+    aggregated_predictions['overall_health'] = "Unhealthy" if "unhealthy" in list(aggregated_predictions.values()) else "Healthy"
     
     result = {
         "predictions": aggregated_predictions,
