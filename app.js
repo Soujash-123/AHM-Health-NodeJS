@@ -1,5 +1,36 @@
+// app.js
 const { PythonShell } = require('python-shell');
 const path = require('path');
+
+// Function to generate random number within a range
+function getRandomNumber(min, max, nullable = false) {
+    if (nullable && Math.random() < 0.1) { // 10% chance of null value for testing
+        return null;
+    }
+    return parseFloat((Math.random() * (max - min) + min).toFixed(2));
+}
+
+// Function to generate random test data
+function generateRandomTestData(numSamples = 3) {
+    const testData = [];
+    
+    for (let i = 0; i < numSamples; i++) {
+        testData.push({
+            temperature_one: getRandomNumber(70, 130, true),      // Temperature range 70-130°C
+            temperature_two: getRandomNumber(70, 130, true),      // Temperature range 70-130°C
+            vibration_x: getRandomNumber(0.5, 8.0, true),        // Vibration range 0.5-8.0
+            vibration_y: getRandomNumber(0.5, 8.0, true),        // Vibration range 0.5-8.0
+            vibration_z: getRandomNumber(0.5, 8.0, true),        // Vibration range 0.5-8.0
+            magnetic_flux_x: getRandomNumber(0.1, 2.0, true),    // Magnetic flux range 0.1-2.0
+            magnetic_flux_y: getRandomNumber(0.1, 2.0, true),    // Magnetic flux range 0.1-2.0
+            magnetic_flux_z: getRandomNumber(0.1, 2.0, true),    // Magnetic flux range 0.1-2.0
+            audible_sound: getRandomNumber(0.1, 1.0, true),      // Audible sound range 0.1-1.0
+            ultra_sound: getRandomNumber(0.1, 1.0, true)         // Ultra sound range 0.1-1.0
+        });
+    }
+    
+    return testData;
+}
 
 // Function to predict from models by calling Python script
 function predictFromModels(inputDataArray) {
@@ -55,27 +86,20 @@ function predictFromModels(inputDataArray) {
     });
 }
 
-// Example input data array
-const inputDataArray = [
-    {
-        temperature_one: 90,
-        temperature_two: 85,
-        vibration_x: 2.5,
-        vibration_y: 2.0,
-        vibration_z: 1.8,
-        magnetic_flux_x: 0.9,
-        magnetic_flux_y: 1.0,
-        magnetic_flux_z: 1.1,
-        audible_sound: 0.3,
-        ultra_sound: 0.2
-    }
-];
+// Generate random test data (you can modify the number of samples)
+const numSamples = 5; // Generate 5 random samples
+const inputDataArray = generateRandomTestData(numSamples);
+
+// Log the generated test data
+console.log("Generated Test Data:");
+console.log(JSON.stringify(inputDataArray, null, 2));
 
 // Call the prediction function and print the result
 predictFromModels(inputDataArray)
     .then(result => {
-        console.log("Predictions (including overall health):", result.predictions);
-        console.log("Complete Health Analysis:", result.complete_health_analysis);
+        console.log("\nPredictions (including overall health):", result.predictions);
+        console.log("\nComplete Health Analysis:", result.complete_health_analysis);
+        console.log("\nData Quality:", result.data_quality);
     })
     .catch(error => {
         console.error("Error:", error);
